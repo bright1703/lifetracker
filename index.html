@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>LifeTracker — Record Your Day</title>
+<meta name="description" content="Track daily events with automatic moon phases, weather, solar activity and astrology. Your personal cosmic diary."/>
+<meta name="theme-color" content="#0d0d14"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d14;
+  --bg2:#13131f;
+  --bg3:#1c1c2e;
+  --card:#1e1e30;
+  --card2:#252542;
+  --border:rgba(120,120,200,.12);
+  --border2:rgba(140,140,220,.28);
+  --tx:#f0f0f8;
+  --tx2:#8888aa;
+  --tx3:#50506a;
+  --accent:#7c3aed;
+  --accent2:#06b6d4;
+  --green:#10b981;
+  --red:#ef4444;
+  --gold:#f59e0b;
+  --rm:12px;
+  --rl:18px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+[data-theme=light]{
+  --bg:#f4f4ff;
+  --bg2:#ebebf8;
+  --bg3:#e0e0f2;
+  --card:#ffffff;
+  --card2:#f0f0fb;
+  --border:rgba(100,100,180,.14);
+  --border2:rgba(100,100,180,.3);
+  --tx:#1a1a2e;
+  --tx2:#55557a;
+  --tx3:#9999bb;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--tx);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  transition:background .25s,color .25s;
+  background-image:
+    radial-gradient(ellipse at 15% 40%,rgba(124,58,237,.07) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 15%,rgba(6,182,212,.05) 0%,transparent 50%),
+    radial-gradient(ellipse at 60% 90%,rgba(124,58,237,.04) 0%,transparent 45%);
+}
+[data-theme=light] body{
+  background-image:
+    radial-gradient(ellipse at 15% 40%,rgba(124,58,237,.05) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 15%,rgba(6,182,212,.03) 0%,transparent 50%);
+}
+
+/* ── Topbar ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 22px;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,13,20,.82);
+}
+[data-theme=light] .topbar{background:rgba(244,244,255,.88);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;cursor:pointer}
+.logo-icon{font-size:21px;line-height:1}
+.logo-text{font-size:19px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(130deg,#a78bfa 20%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-right{display:flex;align-items:center;gap:9px}
+.btn-top-add{
+  padding:8px 16px;background:linear-gradient(135deg,var(--accent),#5b21b6);
+  color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:500;
+  font-family:var(--font);cursor:pointer;transition:opacity .15s;
+  box-shadow:0 3px 12px rgba(124,58,237,.35);white-space:nowrap;
+}
+.btn-top-add:hover{opacity:.88}
+.btn-theme{
+  padding:7px 13px;background:var(--card);color:var(--tx2);
+  border:1px solid var(--border);border-radius:20px;
+  font-size:13px;font-family:var(--font);cursor:pointer;transition:background .15s;
+}
+.btn-theme:hover{background:var(--card2);color:var(--tx)}
+
+/* ── Main container ── */
+.main{max-width:680px;margin:0 auto;padding:28px 18px 90px}
+
+/* ── Hero ── */
+.hero{text-align:center;padding:52px 0 44px}
+.hero-anim{font-size:56px;margin-bottom:22px;display:inline-block;animation:ltFloat 4s ease-in-out infinite}
+@keyframes ltFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.hero-title{font-size:38px;font-weight:700;letter-spacing:-1.2px;line-height:1.18;margin-bottom:14px;color:var(--tx)}
+.hero-title em{font-style:normal;background:linear-gradient(130deg,#a78bfa 20%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:16px;color:var(--tx2);max-width:420px;margin:0 auto 34px;line-height:1.65}
+.hero-cta{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 30px;
+  background:linear-gradient(135deg,var(--accent),#4f1fb5);
+  color:#fff;border:none;border-radius:26px;
+  font-size:16px;font-weight:600;font-family:var(--font);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+  box-shadow:0 6px 28px rgba(124,58,237,.42);letter-spacing:.15px;
+}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(124,58,237,.5)}
+.hero-cta:active{transform:scale(.97)}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:50px}
+@media(max-width:420px){.features{grid-template-columns:repeat(2,1fr)}}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 12px 16px;text-align:center;transition:border-color .15s}
+.feat:hover{border-color:var(--border2)}
+.feat-icon{font-size:26px;margin-bottom:9px;display:block}
+.feat-lbl{font-size:12px;color:var(--tx2);font-weight:500;line-height:1.3}
+
+/* ── Form ── */
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:22px;margin-bottom:14px}
+.form-head{font-size:16px;font-weight:600;color:var(--tx);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--tx2);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px}
+.field input{width:100%;padding:11px 14px;font-size:15px;font-family:var(--font);background:var(--bg2);color:var(--tx);border:1px solid var(--border);border-radius:var(--rm);outline:none;transition:border-color .15s,box-shadow .15s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+.field input::placeholder{color:var(--tx3)}
+input[type=date]{color-scheme:dark}
+[data-theme=light] input[type=date]{color-scheme:light}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+
+/* ── Mood buttons ── */
+.mood-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:360px){.mood-grid{grid-template-columns:repeat(2,1fr)}}
+.mood-btn{
+  padding:10px 6px;background:var(--bg2);
+  border:1.5px solid var(--border);border-radius:var(--rm);
+  font-family:var(--font);cursor:pointer;
+  transition:border-color .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  min-height:62px;justify-content:center;
+}
+.mood-emoji{font-size:20px;line-height:1;pointer-events:none}
+.mood-lbl{font-size:11px;color:var(--tx2);font-weight:500;pointer-events:none}
+.mood-btn:hover{border-color:rgba(124,58,237,.5);background:var(--card2)}
+.mood-btn.sel-exceptional{border-color:var(--gold);background:rgba(245,158,11,.12)}
+.mood-btn.sel-exceptional .mood-lbl{color:var(--gold)}
+.mood-btn.sel-good{border-color:var(--green);background:rgba(16,185,129,.12)}
+.mood-btn.sel-good .mood-lbl{color:var(--green)}
+.mood-btn.sel-neutral{border-color:var(--tx2);background:rgba(136,136,170,.1)}
+.mood-btn.sel-bad{border-color:var(--red);background:rgba(239,68,68,.12)}
+.mood-btn.sel-bad .mood-lbl{color:var(--red)}
+
+/* ── City autocomplete ── */
+.ac-wrap{position:relative}
+#lt-city-sugg{
+  position:absolute;top:calc(100% + 5px);left:0;right:0;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--rm);z-index:300;max-height:220px;
+  overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.35);
+}
+.si{padding:10px 14px;font-size:14px;color:var(--tx);cursor:pointer;border-bottom:1px solid var(--border)}
+.si:last-child{border-bottom:none}
+.si:hover{background:var(--card2)}
+.si-country{font-size:12px;color:var(--tx2);margin-left:6px}
+
+/* ── Btn row ── */
+.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn-gen{
+  flex:1;padding:13px;
+  background:linear-gradient(135deg,var(--accent),#4f1fb5);
+  color:#fff;border:none;border-radius:var(--rm);
+  font-size:15px;font-weight:600;font-family:var(--font);
+  cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);
+  transition:opacity .15s;min-height:48px;
+}
+.btn-gen:hover{opacity:.9}
+.btn-gen:disabled{background:var(--bg3);color:var(--tx3);box-shadow:none;cursor:not-allowed}
+.btn-cancel{
+  padding:13px 20px;background:var(--bg2);color:var(--tx2);
+  border:1px solid var(--border);border-radius:var(--rm);
+  font-size:15px;font-family:var(--font);cursor:pointer;
+  transition:background .15s;white-space:nowrap;min-height:48px;
+}
+.btn-cancel:hover{background:var(--card2);color:var(--tx)}
+
+/* ── Loading ── */
+.load-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:18px 22px;margin-bottom:14px}
+.ls{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--tx2)}
+.ls:last-child{border-bottom:none}
+.ls-ico{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.ls-txt{flex:1}
+.ls-badge{font-size:11px;padding:2px 9px;border-radius:8px;font-weight:500;white-space:nowrap}
+.lb-p{background:var(--bg3);color:var(--tx3)}
+.lb-l{background:rgba(6,182,212,.15);color:var(--accent2)}
+.lb-d{background:rgba(16,185,129,.15);color:var(--green)}
+.lb-w{background:rgba(245,158,11,.15);color:var(--gold)}
+
+/* ── Result card ── */
+.res-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--rl);padding:22px;margin-bottom:14px;
+  animation:ltUp .35s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes ltUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.res-title{font-size:22px;font-weight:700;color:var(--tx);line-height:1.3;margin-bottom:6px}
+.res-meta{font-size:13px;color:var(--tx2);display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:20px}
+.mood-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:500}
+.mp-exceptional{background:rgba(245,158,11,.18);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+.mp-good{background:rgba(16,185,129,.18);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.mp-neutral{background:rgba(136,136,170,.14);color:var(--tx2);border:1px solid var(--border)}
+.mp-bad{background:rgba(239,68,68,.14);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:480px){.data-grid{grid-template-columns:1fr}}
+.data-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:14px 15px}
+.db-lbl{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--tx2);margin-bottom:7px}
+.db-main{font-size:17px;font-weight:600;color:var(--tx);margin-bottom:3px;line-height:1.25}
+.db-sub{font-size:12px;color:var(--tx3);line-height:1.45}
+.db-sub b{color:var(--tx2);font-weight:500}
+.tags-row{margin-top:4px}
+.tags-lbl{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.tag-pill{
+  background:rgba(124,58,237,.14);color:#b08ef5;
+  border:1px solid rgba(124,58,237,.25);
+  border-radius:10px;padding:3px 11px;font-size:12px;font-weight:500;
+}
+
+/* ── Export ── */
+.export-wrap{margin-bottom:13px}
+.export-lbl{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px}
+.export-ta{
+  width:100%;min-height:210px;padding:14px;
+  font-size:12.5px;font-family:'Courier New',Courier,monospace;
+  background:var(--bg2);color:var(--tx2);
+  border:1px solid var(--border);border-radius:var(--rm);
+  resize:vertical;line-height:1.65;outline:none;
+}
+.export-ta:focus{border-color:var(--border2)}
+
+/* ── Action buttons ── */
+.act-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.act-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;border-radius:20px;
+  font-size:13px;font-weight:500;font-family:var(--font);
+  cursor:pointer;border:none;transition:opacity .15s,transform .1s;
+  min-height:44px;white-space:nowrap;
+}
+.act-btn:active{transform:scale(.96)}
+.btn-copy{background:var(--card2);color:var(--tx);border:1px solid var(--border)}
+.btn-copy:hover{border-color:var(--border2)}
+.btn-tg{background:#2AABEE;color:#fff}
+.btn-tg:hover{opacity:.88}
+.btn-wa{background:#25D366;color:#fff}
+.btn-wa:hover{opacity:.88}
+.btn-new{background:var(--bg3);color:var(--tx2);border:1px solid var(--border)}
+.btn-new:hover{color:var(--tx)}
+
+/* ── History ── */
+.hist-section{margin-top:10px}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-top:20px;border-top:1px solid var(--border)}
+.hist-title{font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--tx2)}
+.btn-clear{padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--tx3);font-family:var(--font);cursor:pointer;transition:all .15s}
+.btn-clear:hover{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+.hi{background:var(--card);border:1px solid var(--border);border-radius:var(--rm);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.hi:hover{border-color:var(--border2)}
+.hi-row{display:flex;align-items:center;gap:10px}
+.hi-mood{font-size:20px;flex-shrink:0;line-height:1}
+.hi-info{flex:1;min-width:0}
+.hi-name{font-size:14px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-meta{font-size:12px;color:var(--tx2);margin-top:2px}
+.hi-tags{font-size:11px;color:var(--tx3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-chev{font-size:16px;color:var(--tx3);flex-shrink:0;transition:transform .2s;display:inline-block}
+.hi.open .hi-chev{transform:rotate(90deg)}
+.hi-detail{display:none;margin-top:11px;padding-top:11px;border-top:1px solid var(--border)}
+.hi.open .hi-detail{display:block}
+.hi-ta{width:100%;min-height:130px;padding:10px;font-size:12px;font-family:'Courier New',Courier,monospace;background:var(--bg2);color:var(--tx2);border:1px solid var(--border);border-radius:10px;resize:vertical;margin-bottom:8px;outline:none}
+.hi-copy{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:12px;font-family:var(--font);cursor:pointer;transition:opacity .15s}
+.hi-copy:hover{opacity:.85}
+
+/* ── Utility ── */
+.hidden{display:none!important}
+
+/* ── Responsive ── */
+@media(max-width:400px){
+  .main{padding:20px 14px 70px}
+  .hero-title{font-size:30px}
+  .hero-cta{font-size:15px;padding:13px 24px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <span class="logo" onclick="ltGoHome()">
+    <span class="logo-icon">🌙</span>
+    <span class="logo-text">LifeTracker</span>
+  </span>
+  <div class="topbar-right">
+    <button class="btn-top-add hidden" id="btn-top-add" onclick="ltOpenForm()">+ Record Event</button>
+    <button class="btn-theme" id="btn-theme" onclick="ltToggleTheme()">☀️ Light</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- Hero -->
+  <div id="lt-hero">
+    <div class="hero">
+      <span class="hero-anim">🌙</span>
+      <h1 class="hero-title">Track Your Day.<br><em>Every Detail, Forever.</em></h1>
+      <p class="hero-sub">Moon phases · Weather · Solar activity · Astrology — collected automatically the moment you record an event.</p>
+      <button class="hero-cta" onclick="ltOpenForm()">✦ Record Today's Event</button>
+      <div class="features">
+        <div class="feat"><span class="feat-icon">🌙</span><span class="feat-lbl">Moon Phase &amp; Illumination</span></div>
+        <div class="feat"><span class="feat-icon">🌡️</span><span class="feat-lbl">Weather &amp; Pressure</span></div>
+        <div class="feat"><span class="feat-icon">☀️</span><span class="feat-lbl">Solar Activity</span></div>
+        <div class="feat"><span class="feat-icon">⭐</span><span class="feat-lbl">Astrology &amp; Numerology</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form section -->
+  <div id="lt-form-section" class="hidden">
+    <div class="form-card">
+      <div class="form-head">✦ Record an Event</div>
+
+      <div class="field">
+        <label>What happened?</label>
+        <input type="text" id="lt-title" placeholder="Describe the event in a few words…" autocomplete="off" maxlength="120"/>
+      </div>
+
+      <div class="field">
+        <label>Mood</label>
+        <div class="mood-grid">
+          <button class="mood-btn" data-mood="exceptional" onclick="ltMood('exceptional')">
+            <span class="mood-emoji">🔥</span><span class="mood-lbl">Exceptional</span>
+          </button>
+          <button class="mood-btn" data-mood="good" onclick="ltMood('good')">
+            <span class="mood-emoji">😊</span><span class="mood-lbl">Good</span>
+          </button>
+          <button class="mood-btn sel-neutral" data-mood="neutral" onclick="ltMood('neutral')">
+            <span class="mood-emoji">😐</span><span class="mood-lbl">Neutral</span>
+          </button>
+          <button class="mood-btn" data-mood="bad" onclick="ltMood('bad')">
+            <span class="mood-emoji">😞</span><span class="mood-lbl">Bad</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field ac-wrap">
+          <label>City</label>
+          <input type="text" id="lt-city" placeholder="Type a city…" autocomplete="off"/>
+          <div id="lt-city-sugg"></div>
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="lt-date"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>My tags (comma separated)</label>
+        <input type="text" id="lt-tags" placeholder="family, work, travel…" autocomplete="off"/>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-gen" id="btn-gen" onclick="ltGenerate()">Generate Report</button>
+        <button class="btn-cancel" onclick="ltCloseForm()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="lt-loading" class="hidden">
+      <div class="load-card" id="lt-load-steps"></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="lt-result" class="hidden">
+    <div class="res-card" id="lt-res-card"></div>
+    <div class="export-wrap">
+      <div class="export-lbl">Export Text</div>
+      <textarea class="export-ta" id="lt-export" readonly></textarea>
+    </div>
+    <div class="act-row">
+      <button class="act-btn btn-copy" id="btn-copy" onclick="ltCopy()">📋 Copy</button>
+      <button class="act-btn btn-tg" onclick="ltTelegram()">📱 Telegram</button>
+      <button class="act-btn btn-wa" onclick="ltWhatsApp()">💬 WhatsApp</button>
+      <button class="act-btn btn-new" onclick="ltNewEvent()">🔁 New Event</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div id="lt-history" class="hidden hist-section">
+    <div class="hist-hdr">
+      <span class="hist-title" id="lt-hist-label">Event History</span>
+      <button class="btn-clear" onclick="ltClearHistory()">Clear all</button>
+    </div>
+    <div id="lt-hist-list"></div>
+  </div>
+
+</main>
+
+<script>
+/* ════════════════════════════
+   STATE
+════════════════════════════ */
+let ltCity     = null;
+let ltExport   = '';
+let ltMoodVal  = 'neutral';
+let ltSuggTmr  = null;
+
+/* ════════════════════════════
+   THEME
+════════════════════════════ */
+let ltTheme = (localStorage.getItem('lt_theme')) ||
+              (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+(function(){
+  document.documentElement.setAttribute('data-theme', ltTheme);
+  document.getElementById('btn-theme').textContent = ltTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+})();
+function ltToggleTheme(){
+  ltTheme = ltTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', ltTheme);
+  document.getElementById('btn-theme').textContent = ltTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+  try{ localStorage.setItem('lt_theme', ltTheme); }catch(e){}
+}
+
+/* ════════════════════════════
+   INIT DATE
+════════════════════════════ */
+(function(){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const s = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('lt-date').value = s;
+  document.getElementById('lt-date').max   = s;
+})();
+
+/* ════════════════════════════
+   CITY AUTOCOMPLETE
+════════════════════════════ */
+document.getElementById('lt-city').addEventListener('input', function(){
+  clearTimeout(ltSuggTmr);
+  ltCity = null;
+  const q = this.value.trim();
+  if(q.length < 2){ document.getElementById('lt-city-sugg').innerHTML=''; return; }
+  ltSuggTmr = setTimeout(() => ltFetchCities(q), 300);
+});
+document.addEventListener('click', e => {
+  if(!e.target.closest('.ac-wrap'))
+    document.getElementById('lt-city-sugg').innerHTML = '';
+});
+async function ltFetchCities(q){
+  try{
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=en`);
+    const d = await r.json();
+    const box = document.getElementById('lt-city-sugg');
+    const items = d.features.filter(f => ['city','town','village','locality','municipality'].includes(f.properties.type));
+    if(!items.length){ box.innerHTML=''; return; }
+    box._items = items;
+    box.innerHTML = items.map((f,i) => {
+      const p = f.properties;
+      return `<div class="si" onclick="ltPickCity(${i})">${p.name}<span class="si-country">${p.country||''}</span></div>`;
+    }).join('');
+  }catch(e){}
+}
+function ltPickCity(i){
+  const box = document.getElementById('lt-city-sugg');
+  const f = box._items[i], p = f.properties;
+  ltCity = {
+    name: p.name,
+    lat:  f.geometry.coordinates[1],
+    lon:  f.geometry.coordinates[0],
+    displayName: [p.name, p.state, p.country].filter(Boolean).join(', ')
+  };
+  document.getElementById('lt-city').value = ltCity.displayName;
+  box.innerHTML = '';
+}
+
+/* ════════════════════════════
+   MOOD
+════════════════════════════ */
+function ltMood(m){
+  ltMoodVal = m;
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.className = 'mood-btn' + (b.dataset.mood === m ? ' sel-'+m : '');
+  });
+}
+
+/* ════════════════════════════
+   FORM NAVIGATION
+════════════════════════════ */
+function ltOpenForm(){
+  document.getElementById('lt-hero').classList.add('hidden');
+  document.getElementById('lt-form-section').classList.remove('hidden');
+  document.getElementById('lt-result').classList.add('hidden');
+  document.getElementById('btn-top-add').classList.remove('hidden');
+  setTimeout(() => document.getElementById('lt-title').focus(), 50);
+}
+function ltCloseForm(){
+  document.getElementById('lt-form-section').classList.add('hidden');
+  document.getElementById('lt-loading').classList.add('hidden');
+  if(!ltExport && ltLoadHistory().length === 0){
+    document.getElementById('lt-hero').classList.remove('hidden');
+    document.getElementById('btn-top-add').classList.add('hidden');
+  }
+}
+function ltGoHome(){
+  document.getElementById('lt-form-section').classList.add('hidden');
+  document.getElementById('lt-result').classList.add('hidden');
+  document.getElementById('lt-loading').classList.add('hidden');
+  if(ltLoadHistory().length === 0){
+    document.getElementById('lt-hero').classList.remove('hidden');
+    document.getElementById('btn-top-add').classList.add('hidden');
+  }
+}
+
+/* ════════════════════════════
+   LOADING STEPS UI
+════════════════════════════ */
+function ltStep(id, status, badge){
+  const el = document.getElementById('lst-'+id);
+  if(!el) return;
+  const icons = {loading:'⏳', done:'✅', warn:'⚠️'};
+  const cls   = {loading:'lb-l', done:'lb-d', warn:'lb-w'};
+  el.querySelector('.ls-ico').textContent = icons[status] || '🔸';
+  const b = el.querySelector('.ls-badge');
+  if(b){ b.textContent = badge||'…'; b.className='ls-badge '+(cls[status]||'lb-p'); }
+}
+
+/* ════════════════════════════
+   MAIN GENERATE
+════════════════════════════ */
+async function ltGenerate(){
+  const titleVal = document.getElementById('lt-title').value.trim();
+  if(!titleVal){ alert('Please enter an event title.'); return; }
+  if(!ltCity){   alert('Please select a city from the autocomplete list.'); return; }
+
+  const dateStr = document.getElementById('lt-date').value;
+  const eventDate = new Date((dateStr||new Date().toISOString().slice(0,10))+'T12:00:00');
+  const userTags = document.getElementById('lt-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+  document.getElementById('btn-gen').disabled = true;
+  document.getElementById('lt-result').classList.add('hidden');
+
+  const steps = [
+    {id:'moon',    icon:'🌙', label:'Moon phase & illumination'},
+    {id:'weather', icon:'🌡️', label:'Weather & atmospheric pressure'},
+    {id:'solar',   icon:'☀️', label:'Solar activity (NOAA)'},
+    {id:'astro',   icon:'⭐', label:'Astrology & numerology'},
+  ];
+  document.getElementById('lt-load-steps').innerHTML =
+    steps.map(s => `<div class="ls" id="lst-${s.id}">
+      <span class="ls-ico">${s.icon}</span>
+      <span class="ls-txt">${s.label}</span>
+      <span class="ls-badge lb-p">Pending</span>
+    </div>`).join('');
+  document.getElementById('lt-loading').classList.remove('hidden');
+  steps.forEach(s => ltStep(s.id, 'loading'));
+
+  const [moonData, weatherData, solarData] = await Promise.all([
+    ltFetchMoon(eventDate).then(d => {
+      ltStep('moon', d._fallback?'warn':'done', d.phase);
+      return d;
+    }),
+    ltFetchWeather(ltCity.lat, ltCity.lon, eventDate).then(d => {
+      ltStep('weather', d._error?'warn':'done', d.temperature!=null ? d.temperature+'°C' : 'N/A');
+      return d;
+    }),
+    ltFetchSolar(eventDate).then(d => {
+      ltStep('solar', d._fallback?'warn':'done', d.classLabel||'Quiet');
+      return d;
+    }),
+  ]);
+  const astroData = ltGetAstro(eventDate);
+  ltStep('astro', 'done', astroData.zodiac);
+
+  const tags = ltBuildTags({titleVal, moodVal:ltMoodVal, moonData, weatherData, solarData, astroData, userTags});
+  const exportText = ltBuildText({titleVal, moodVal:ltMoodVal, cityName:ltCity.displayName, eventDate, moonData, weatherData, solarData, astroData, tags});
+  ltExport = exportText;
+
+  ltRenderCard({titleVal, moodVal:ltMoodVal, cityName:ltCity.displayName, eventDate, moonData, weatherData, solarData, astroData, tags});
+  document.getElementById('lt-export').value = exportText;
+  document.getElementById('lt-loading').classList.add('hidden');
+  document.getElementById('lt-result').classList.remove('hidden');
+  document.getElementById('btn-gen').disabled = false;
+  document.getElementById('lt-result').scrollIntoView({behavior:'smooth', block:'start'});
+
+  ltSaveEvent({
+    id: Date.now(),
+    date: eventDate.toISOString().slice(0,10),
+    title: titleVal, mood: ltMoodVal, city: ltCity.displayName,
+    moonPhase: moonData.phase, moonEmoji: moonData.emoji, moonIllumination: moonData.illumination,
+    temperature: weatherData.temperature, pressure: weatherData.pressure,
+    pressureTag: weatherData.pressureTag, conditions: weatherData.conditions, wind: weatherData.wind,
+    solarClass: solarData.classLabel, solarTag: solarData.tag,
+    zodiac: astroData.zodiac, zodiacEmoji: astroData.zodiacEmoji,
+    mercuryRetrograde: astroData.mercuryRetrograde, dayNumber: astroData.dayNumber,
+    userTags, autoTags: tags.auto, exportText,
+    createdAt: new Date().toISOString()
+  });
+  ltRenderHistory();
+}
+
+/* ════════════════════════════
+   RENDER RESULT CARD
+════════════════════════════ */
+function ltRenderCard({titleVal, moodVal, cityName, eventDate, moonData, weatherData, solarData, astroData, tags}){
+  const moodEmojis = {good:'😊', neutral:'😐', bad:'😞', exceptional:'🔥'};
+  const moodLabels = {good:'Good', neutral:'Neutral', bad:'Bad', exceptional:'Exceptional'};
+  const dateStr = eventDate.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const pLbl = weatherData.pressureTag==='low_pressure'?'Low ↓':weatherData.pressureTag==='high_pressure'?'High ↑':'Normal';
+  const tagsHtml = tags.all.map(tag=>`<span class="tag-pill">#${tag}</span>`).join('');
+  document.getElementById('lt-res-card').innerHTML = `
+    <div class="res-title">${ltEsc(titleVal)}</div>
+    <div class="res-meta">
+      <span>📅 ${dateStr}</span>
+      <span>📍 ${ltEsc(cityName)}</span>
+      <span class="mood-pill mp-${moodVal}">${moodEmojis[moodVal]} ${moodLabels[moodVal]}</span>
+    </div>
+    <div class="data-grid">
+      <div class="data-block">
+        <div class="db-lbl">🌙 Moon</div>
+        <div class="db-main">${moonData.emoji} ${moonData.phase}</div>
+        <div class="db-sub">Illumination: <b>${moonData.illumination}%</b></div>
+      </div>
+      <div class="data-block">
+        <div class="db-lbl">🌡️ Weather</div>
+        <div class="db-main">${weatherData.temperature!=null?weatherData.temperature+'°C':'—'}</div>
+        <div class="db-sub">${weatherData.conditions||''}${weatherData.pressure?' · '+weatherData.pressure+' hPa ('+pLbl+')':''}</div>
+      </div>
+      <div class="data-block">
+        <div class="db-lbl">☀️ Solar Activity</div>
+        <div class="db-main">${solarData.classLabel||'Quiet ☀️'}</div>
+        <div class="db-sub">${solarData.description}</div>
+      </div>
+      <div class="data-block">
+        <div class="db-lbl">⭐ Astrology</div>
+        <div class="db-main">${astroData.zodiac} ${astroData.zodiacEmoji}</div>
+        <div class="db-sub">Day ${astroData.dayNumber} · Mercury ${astroData.mercuryRetrograde?'<b>Retrograde ⚠️</b>':'Direct ✓'}</div>
+      </div>
+    </div>
+    <div class="tags-row">
+      <div class="tags-lbl">🏷️ Tags</div>
+      <div class="tags-wrap">${tagsHtml}</div>
+    </div>`;
+}
+
+/* ════════════════════════════
+   MOON API + FALLBACK
+════════════════════════════ */
+async function ltFetchMoon(date){
+  const unix = Math.floor(date.getTime()/1000);
+  try{
+    const r = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${unix}`);
+    if(!r.ok) throw new Error();
+    const d = await r.json();
+    if(!d||!d[0]||d[0].Error) throw new Error();
+    const m = d[0];
+    const phaseName = m.Phase||m.phase||'Unknown';
+    return {phase:phaseName, illumination:Math.round((m.Illumination||m.illumination||0)*100), emoji:ltMoonEmoji(phaseName), _fallback:false};
+  }catch(e){
+    return ltMoonLocal(date);
+  }
+}
+function ltMoonEmoji(p){
+  p = p.toLowerCase();
+  if(p.includes('new'))             return '🌑';
+  if(p.includes('waxing crescent')) return '🌒';
+  if(p.includes('first quarter'))   return '🌓';
+  if(p.includes('waxing gibbous'))  return '🌔';
+  if(p.includes('full'))            return '🌕';
+  if(p.includes('waning gibbous'))  return '🌖';
+  if(p.includes('last quarter'))    return '🌗';
+  if(p.includes('waning crescent')) return '🌘';
+  return '🌙';
+}
+function ltMoonLocal(date){
+  const lp = 2551443;
+  const nm = new Date('2000-01-06T18:14:00Z');
+  const age = Math.floor(((date-nm)/1000%lp)/(24*3600));
+  const illum = Math.round(50*(1-Math.cos(2*Math.PI*age/29.53)));
+  const phases = [
+    [1,'New Moon','🌑'],[7,'Waxing Crescent','🌒'],[8,'First Quarter','🌓'],
+    [14,'Waxing Gibbous','🌔'],[15,'Full Moon','🌕'],[21,'Waning Gibbous','🌖'],
+    [22,'Last Quarter','🌗'],[29,'Waning Crescent','🌘']
+  ];
+  let phaseName='Waning Crescent', emoji='🌘';
+  for(const [limit,name,em] of phases){ if(age<limit){phaseName=name;emoji=em;break;} }
+  return {phase:phaseName, illumination:illum, emoji, _fallback:true};
+}
+
+/* ════════════════════════════
+   WEATHER API
+════════════════════════════ */
+const WX = {
+  0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+  45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',
+  61:'Light rain',63:'Moderate rain',65:'Heavy rain',
+  71:'Light snow',73:'Moderate snow',75:'Heavy snow',77:'Snow grains',
+  80:'Light showers',81:'Moderate showers',82:'Violent showers',
+  95:'Thunderstorm',96:'Thunderstorm + hail',99:'Thunderstorm + heavy hail'
+};
+async function ltFetchWeather(lat, lon, date){
+  const pad = n => String(n).padStart(2,'0');
+  const ds  = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+  const now = new Date();
+  const td  = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const ck  = `lt_wx_${(lat).toFixed(2)}_${(lon).toFixed(2)}_${ds}`;
+  try{ const c=sessionStorage.getItem(ck); if(c){const{ts,d}=JSON.parse(c);if(Date.now()-ts<1800000)return d;} }catch(e){}
+  try{
+    let temp,pres,code,wind;
+    if(ds===td){
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,surface_pressure,weather_code,wind_speed_10m&timezone=auto`;
+      const data=(await(await fetch(url)).json()).current;
+      temp=Math.round(data.temperature_2m); pres=Math.round(data.surface_pressure);
+      code=data.weather_code; wind=Math.round(data.wind_speed_10m);
+    }else{
+      const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${ds}&end_date=${ds}&daily=temperature_2m_mean,surface_pressure_mean,weather_code,wind_speed_10m_max&timezone=auto`;
+      const dd=(await(await fetch(url)).json()).daily;
+      temp=dd.temperature_2m_mean?Math.round(dd.temperature_2m_mean[0]):null;
+      pres=dd.surface_pressure_mean?Math.round(dd.surface_pressure_mean[0]):null;
+      code=dd.weather_code?dd.weather_code[0]:null;
+      wind=dd.wind_speed_10m_max?Math.round(dd.wind_speed_10m_max[0]):null;
+    }
+    let pt='normal_pressure';
+    if(pres!=null){if(pres<1000)pt='low_pressure';else if(pres>1013)pt='high_pressure';}
+    const result={temperature:temp,pressure:pres,pressureTag:pt,conditions:code!=null?(WX[code]||'Unknown'):null,wind,_error:false};
+    try{sessionStorage.setItem(ck,JSON.stringify({ts:Date.now(),d:result}));}catch(e){}
+    return result;
+  }catch(e){return{temperature:null,pressure:null,pressureTag:'normal_pressure',conditions:null,wind:null,_error:true};}
+}
+
+/* ════════════════════════════
+   SOLAR API
+════════════════════════════ */
+async function ltFetchSolar(date){
+  const pad=n=>String(n).padStart(2,'0');
+  const ds=`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+  const ck=`lt_sol_${ds}`;
+  try{const c=sessionStorage.getItem(ck);if(c){const{ts,d}=JSON.parse(c);if(Date.now()-ts<1800000)return d;}}catch(e){}
+  let result;
+  try{
+    const r=await fetch('https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json');
+    if(!r.ok) throw new Error();
+    result = ltParseFlares(await r.json(), ds);
+  }catch(e1){
+    try{
+      const r=await fetch(`https://api.nasa.gov/DONKI/FLR?startDate=${ds}&endDate=${ds}&api_key=DEMO_KEY`);
+      if(!r.ok) throw new Error();
+      const data=await r.json();
+      result=data&&data.length?ltFlareResult(data[data.length-1].classType):ltQuietSun();
+    }catch(e2){ result={classLabel:null,tag:'quiet_sun',description:'Quiet Sun',emoji:'☀️',_fallback:true}; }
+  }
+  try{sessionStorage.setItem(ck,JSON.stringify({ts:Date.now(),d:result}));}catch(e){}
+  return result;
+}
+function ltParseFlares(flares, ds){
+  const tf=flares.filter(f=>f.beginTime&&f.beginTime.startsWith(ds));
+  if(!tf.length) return ltQuietSun();
+  const best=tf.sort((a,b)=>('XMCBA'.indexOf((b.classType||'A')[0]))-('XMCBA'.indexOf((a.classType||'A')[0])))[0];
+  return ltFlareResult(best.classType);
+}
+function ltFlareResult(cls){
+  if(!cls) return ltQuietSun();
+  const l=cls[0].toUpperCase();
+  if(l==='X') return{classLabel:cls,tag:'x_flare',description:`${cls} Flare ⚠️ (Strong)`,emoji:'☀️',_fallback:false};
+  if(l==='M') return{classLabel:cls,tag:'m_flare',description:`${cls} Flare (Moderate)`,emoji:'☀️',_fallback:false};
+  if(l==='C') return{classLabel:cls,tag:'c_flare',description:`${cls} Flare (Weak)`,emoji:'☀️',_fallback:false};
+  return ltQuietSun();
+}
+function ltQuietSun(){ return{classLabel:null,tag:'quiet_sun',description:'Quiet Sun',emoji:'☀️',_fallback:false}; }
+
+/* ════════════════════════════
+   ASTROLOGY (LOCAL)
+════════════════════════════ */
+const LT_RETRO=[
+  {s:'2025-03-15',e:'2025-04-07'},{s:'2025-07-18',e:'2025-08-11'},
+  {s:'2025-11-09',e:'2025-11-29'},{s:'2026-03-06',e:'2026-03-28'},
+  {s:'2026-07-10',e:'2026-08-02'},{s:'2026-11-02',e:'2026-11-22'},
+];
+const LT_ZODIAC=[
+  {s:'Capricorn',e:'♑'},{s:'Aquarius',e:'♒'},{s:'Pisces',e:'♓'},{s:'Aries',e:'♈'},
+  {s:'Taurus',e:'♉'},{s:'Gemini',e:'♊'},{s:'Cancer',e:'♋'},{s:'Leo',e:'♌'},
+  {s:'Virgo',e:'♍'},{s:'Libra',e:'♎'},{s:'Scorpio',e:'♏'},{s:'Sagittarius',e:'♐'},
+];
+function ltZodiacIdx(m,d){
+  if((m===1&&d>=20)||(m===2&&d<=18))return 1;
+  if((m===2&&d>=19)||(m===3&&d<=20))return 2;
+  if((m===3&&d>=21)||(m===4&&d<=19))return 3;
+  if((m===4&&d>=20)||(m===5&&d<=20))return 4;
+  if((m===5&&d>=21)||(m===6&&d<=20))return 5;
+  if((m===6&&d>=21)||(m===7&&d<=22))return 6;
+  if((m===7&&d>=23)||(m===8&&d<=22))return 7;
+  if((m===8&&d>=23)||(m===9&&d<=22))return 8;
+  if((m===9&&d>=23)||(m===10&&d<=22))return 9;
+  if((m===10&&d>=23)||(m===11&&d<=21))return 10;
+  if((m===11&&d>=22)||(m===12&&d<=21))return 11;
+  return 0;
+}
+function ltGetAstro(date){
+  const m=date.getMonth()+1, d=date.getDate();
+  const z=LT_ZODIAC[ltZodiacIdx(m,d)];
+  let sum=`${d}${m}${date.getFullYear()}`.split('').reduce((a,c)=>a+parseInt(c,10),0);
+  while(sum>9&&sum!==11&&sum!==22&&sum!==33) sum=String(sum).split('').reduce((a,c)=>a+parseInt(c,10),0);
+  const ts=date.getTime();
+  const retro=LT_RETRO.some(p=>ts>=new Date(p.s+'T00:00:00').getTime()&&ts<=new Date(p.e+'T23:59:59').getTime());
+  return{zodiac:z.s, zodiacEmoji:z.e, dayNumber:sum, mercuryRetrograde:retro};
+}
+
+/* ════════════════════════════
+   TAGS + EXPORT TEXT
+════════════════════════════ */
+function ltSlug(t){ return t.toLowerCase().replace(/[^a-zA-Zа-яёА-ЯЁ0-9\s]/g,'').replace(/\s+/g,'_').slice(0,30); }
+function ltBuildTags({titleVal,moodVal,moonData,weatherData,solarData,astroData,userTags}){
+  const auto=[];
+  const ts=titleVal.trim().split(/\s+/).slice(0,3).map(w=>w.toLowerCase()).join('_').replace(/[^a-zA-Zа-яёА-ЯЁ0-9_]/g,'');
+  if(ts) auto.push(ts);
+  auto.push(moodVal+'_day');
+  const p=moonData.phase.toLowerCase();
+  if(p.includes('waning'))     auto.push('waning_moon');
+  else if(p.includes('waxing'))auto.push('waxing_moon');
+  else if(p.includes('full'))  auto.push('full_moon');
+  else                         auto.push('new_moon');
+  if(weatherData.pressureTag)  auto.push(weatherData.pressureTag);
+  if(solarData.tag)            auto.push(solarData.tag);
+  auto.push(astroData.zodiac.toLowerCase());
+  auto.push(astroData.mercuryRetrograde?'mercury_retrograde':'mercury_direct');
+  const usr=userTags.map(ltSlug).filter(Boolean);
+  return{auto, user:usr, all:[...auto,...usr]};
+}
+function ltBuildText({titleVal,moodVal,cityName,eventDate,moonData,weatherData,solarData,astroData,tags}){
+  const mE={good:'😊',neutral:'😐',bad:'😞',exceptional:'🔥'};
+  const mL={good:'Good',neutral:'Neutral',bad:'Bad',exceptional:'Exceptional'};
+  const dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const ds=`${dn[eventDate.getDay()]}, ${eventDate.getDate()} ${mn[eventDate.getMonth()]} ${eventDate.getFullYear()}`;
+  const pL=weatherData.pressureTag==='low_pressure'?'Low ↓':weatherData.pressureTag==='high_pressure'?'High ↑':'Normal';
+  const tl=tags.all.map(tag=>`#${tag}`).join(' ');
+  const hr='━━━━━━━━━━━━━━━━━━━━━━━';
+  let t=`${hr}\n📅 EVENT LOG\n${hr}\n`;
+  t+=`📝 ${titleVal}\n📅 ${ds}\n📍 ${cityName}\n${mE[moodVal]} Mood: ${mL[moodVal]}\n\n`;
+  t+=`🌙 MOON\nPhase: ${moonData.phase} ${moonData.emoji}\nIllumination: ${moonData.illumination}%\n\n`;
+  t+=`🌡️ WEATHER\n`;
+  if(weatherData.temperature!=null)t+=`Temperature: ${weatherData.temperature}°C\n`;
+  if(weatherData.pressure!=null)   t+=`Pressure: ${weatherData.pressure} hPa (${pL})\n`;
+  if(weatherData.conditions)       t+=`Conditions: ${weatherData.conditions}\n`;
+  if(weatherData.wind!=null)       t+=`Wind: ${weatherData.wind} km/h\n`;
+  t+=`\n☀️ SOLAR ACTIVITY\nStatus: ${solarData.description}\n\n`;
+  t+=`⭐ ASTROLOGY\nSun in: ${astroData.zodiac} ${astroData.zodiacEmoji}\nDay number: ${astroData.dayNumber}\nMercury: ${astroData.mercuryRetrograde?'Retrograde ⚠️':'Direct ✓'}\n\n`;
+  t+=`🏷️ TAGS\n${tl}\n${hr}\nTracked with LifeTracker`;
+  return t;
+}
+
+/* ════════════════════════════
+   COPY & SHARE
+════════════════════════════ */
+function ltCopy(){
+  if(!ltExport) return;
+  const flash=()=>{
+    const btn=document.getElementById('btn-copy');
+    const orig=btn.textContent;
+    btn.textContent='✓ Copied!';
+    btn.style.cssText='background:rgba(16,185,129,.18);color:var(--green);border:1px solid rgba(16,185,129,.35)';
+    setTimeout(()=>{btn.textContent=orig;btn.removeAttribute('style');},2000);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ltExport).then(flash).catch(()=>{ ltFbCopy(); flash(); });
+  }else{ ltFbCopy(); flash(); }
+}
+function ltFbCopy(){
+  const ta=document.getElementById('lt-export');
+  ta.select();
+  try{document.execCommand('copy');}catch(e){}
+}
+function ltTelegram(){ if(!ltExport)return; window.open('https://t.me/share/url?url=https%3A%2F%2Fbright1703.github.io%2Flifetracker&text='+encodeURIComponent(ltExport),'_blank','noopener'); }
+function ltWhatsApp(){ if(!ltExport)return; window.open('https://wa.me/?text='+encodeURIComponent(ltExport),'_blank','noopener'); }
+function ltNewEvent(){
+  ltExport='';
+  document.getElementById('lt-result').classList.add('hidden');
+  document.getElementById('lt-title').value='';
+  document.getElementById('lt-tags').value='';
+  document.getElementById('lt-city').value='';
+  ltCity=null;
+  ltMood('neutral');
+  const now=new Date(), pad=n=>String(n).padStart(2,'0');
+  document.getElementById('lt-date').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('lt-title').focus();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ════════════════════════════
+   LOCAL STORAGE HISTORY
+════════════════════════════ */
+const LT_KEY='lt_events_v1';
+function ltSaveEvent(ev){
+  try{
+    let arr=ltLoadHistory(); arr.unshift(ev);
+    if(arr.length>50) arr=arr.slice(0,50);
+    localStorage.setItem(LT_KEY,JSON.stringify(arr));
+  }catch(e){}
+}
+function ltLoadHistory(){
+  try{const r=localStorage.getItem(LT_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
+}
+function ltClearHistory(){
+  if(!confirm('Delete all saved events?')) return;
+  try{localStorage.removeItem(LT_KEY);}catch(e){}
+  document.getElementById('lt-history').classList.add('hidden');
+}
+function ltRenderHistory(){
+  const events=ltLoadHistory();
+  const sec=document.getElementById('lt-history');
+  if(!events.length){sec.classList.add('hidden');return;}
+  const mE={good:'😊',neutral:'😐',bad:'😞',exceptional:'🔥'};
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('lt-hist-label').textContent=`Event History (${events.length})`;
+  document.getElementById('lt-hist-list').innerHTML=events.map((ev,i)=>{
+    const d=new Date(ev.date+'T12:00:00');
+    const dl=`${d.getDate()} ${mo[d.getMonth()]} ${d.getFullYear()}`;
+    const tp=(ev.autoTags||[]).slice(0,3).map(tg=>'#'+tg).join(' ');
+    return `<div class="hi" id="hi${i}" onclick="ltToggleHi(${i})">
+      <div class="hi-row">
+        <div class="hi-mood">${mE[ev.mood]||'😐'}</div>
+        <div class="hi-info">
+          <div class="hi-name">${ltEsc(ev.title)}</div>
+          <div class="hi-meta">${dl} · ${ltEsc(ev.city)} · ${ev.moonEmoji||'🌙'}</div>
+          <div class="hi-tags">${tp}</div>
+        </div>
+        <span class="hi-chev">›</span>
+      </div>
+      <div class="hi-detail">
+        <textarea class="hi-ta" readonly>${ltEsc(ev.exportText||'')}</textarea>
+        <button class="hi-copy" onclick="event.stopPropagation();ltCopyHi(${i})">📋 Copy</button>
+      </div>
+    </div>`;
+  }).join('');
+  sec.classList.remove('hidden');
+}
+function ltToggleHi(i){
+  const el=document.getElementById('hi'+i);
+  if(el) el.classList.toggle('open');
+}
+function ltCopyHi(i){
+  const ev=ltLoadHistory()[i];
+  if(!ev||!ev.exportText) return;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ev.exportText).catch(()=>{});
+  }else{
+    const ta=document.querySelector(`#hi${i} .hi-ta`);
+    if(ta){ta.select();try{document.execCommand('copy');}catch(e){}}
+  }
+  const btn=document.querySelector(`#hi${i} .hi-copy`);
+  if(btn){const o=btn.textContent;btn.textContent='✓';setTimeout(()=>btn.textContent=o,1500);}
+}
+
+/* ════════════════════════════
+   HELPERS
+════════════════════════════ */
+function ltEsc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════
+   BOOT
+════════════════════════════ */
+(function(){
+  const has = ltLoadHistory().length > 0;
+  if(has){
+    document.getElementById('lt-hero').classList.add('hidden');
+    document.getElementById('lt-form-section').classList.remove('hidden');
+    document.getElementById('btn-top-add').classList.remove('hidden');
+  }
+  ltRenderHistory();
+})();
+</script>
+</body>
+</html>
