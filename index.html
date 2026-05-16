@@ -14,6 +14,9 @@
 <meta name="apple-mobile-web-app-title" content="LifeTracker"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -354,6 +357,59 @@ input[type=date]{color-scheme:dark}
 }
 .btn-im-close:hover{background:var(--card2);color:var(--tx)}
 
+/* ── Auth UI ── */
+.btn-signin{
+  padding:7px 14px;
+  background:linear-gradient(135deg,var(--accent),#4f1fb5);
+  color:#fff;border:none;border-radius:20px;
+  font-size:13px;font-weight:500;font-family:var(--font);
+  cursor:pointer;transition:opacity .15s;
+  box-shadow:0 2px 8px rgba(124,58,237,.3);white-space:nowrap;
+}
+.btn-signin:hover{opacity:.88}
+.auth-info{display:flex;align-items:center;gap:7px}
+.auth-ava{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#06b6d4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+  cursor:pointer;flex-shrink:0;overflow:hidden;
+  border:2px solid rgba(124,58,237,.5);
+}
+.auth-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.auth-name{font-size:12px;color:var(--tx2);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-signout{
+  padding:5px 11px;background:transparent;
+  border:1px solid var(--border);border-radius:14px;
+  font-size:12px;color:var(--tx3);font-family:var(--font);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.btn-signout:hover{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+@media(max-width:480px){.auth-name,.btn-signout{display:none}}
+
+/* ── Sync tag + Migration banner ── */
+.sync-tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:8px}
+.sync-tag.cloud{background:rgba(16,185,129,.15);color:var(--green)}
+.sync-tag.local{background:var(--bg3);color:var(--tx3)}
+.migrate-banner{
+  background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.07));
+  border:1px solid rgba(124,58,237,.22);
+  border-radius:var(--rm);padding:13px 15px;margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.mig-text{flex:1;font-size:13px;color:var(--tx);line-height:1.4;min-width:160px}
+.btn-mig-yes{
+  padding:7px 16px;background:var(--accent);color:#fff;
+  border:none;border-radius:14px;font-size:12px;font-weight:600;
+  font-family:var(--font);cursor:pointer;
+}
+.btn-mig-yes:hover{opacity:.88}
+.btn-mig-no{
+  padding:7px 10px;background:transparent;color:var(--tx3);
+  border:none;font-size:12px;font-family:var(--font);cursor:pointer;
+}
+.btn-mig-no:hover{color:var(--tx2)}
+
 /* ── Utility ── */
 .hidden{display:none!important}
 
@@ -381,6 +437,12 @@ input[type=date]{color-scheme:dark}
   </span>
   <div class="topbar-right">
     <button class="btn-top-add hidden" id="btn-top-add" onclick="ltOpenForm()">+ Record Event</button>
+    <button class="btn-signin hidden" id="btn-signin" onclick="ltSignIn()">🔑 Sign in</button>
+    <div class="auth-info hidden" id="auth-info">
+      <div class="auth-ava" id="auth-ava" onclick="ltSignOut()" title="Sign out"></div>
+      <span class="auth-name" id="auth-name"></span>
+      <button class="btn-signout" onclick="ltSignOut()">Sign out</button>
+    </div>
     <button class="btn-install" id="btn-install" onclick="ltInstall()">📲 Install</button>
     <button class="btn-theme" id="btn-theme" onclick="ltToggleTheme()">☀️ Light</button>
   </div>
@@ -478,9 +540,13 @@ input[type=date]{color-scheme:dark}
   <!-- History -->
   <div id="lt-history" class="hidden hist-section">
     <div class="hist-hdr">
-      <span class="hist-title" id="lt-hist-label">Event History</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="hist-title" id="lt-hist-label">Event History</span>
+        <span class="sync-tag" id="sync-tag"></span>
+      </div>
       <button class="btn-clear" onclick="ltClearHistory()">Clear all</button>
     </div>
+    <div id="lt-migrate" class="migrate-banner hidden"></div>
     <div id="lt-hist-list"></div>
   </div>
 
@@ -532,12 +598,33 @@ input[type=date]{color-scheme:dark}
 
 <script>
 /* ════════════════════════════
+   FIREBASE CONFIG
+   1. Go to https://console.firebase.google.com
+   2. Create a project → Add web app → copy the config below
+   3. Enable Google Sign-in: Authentication → Sign-in method → Google
+   4. Enable Firestore: Firestore Database → Create database (test mode)
+   5. Add authorized domain: Authentication → Settings → Authorized domains → add bright1703.github.io
+════════════════════════════ */
+const LT_FB_CFG = {
+  apiKey:            'YOUR_API_KEY',
+  authDomain:        'YOUR_PROJECT_ID.firebaseapp.com',
+  projectId:         'YOUR_PROJECT_ID',
+  storageBucket:     'YOUR_PROJECT_ID.appspot.com',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId:             'YOUR_APP_ID'
+};
+
+/* ════════════════════════════
    STATE
 ════════════════════════════ */
 let ltCity     = null;
 let ltExport   = '';
 let ltMoodVal  = 'neutral';
 let ltSuggTmr  = null;
+let ltUser        = null;   // Firebase user
+let ltCloudEvents = null;   // null = not logged in; [] = logged in (possibly empty)
+let ltCloudUnsub  = null;   // Firestore listener unsubscribe
+let ltMigrateShown = false;
 
 /* ════════════════════════════
    THEME
@@ -1025,16 +1112,27 @@ function ltNewEvent(){
 const LT_KEY='lt_events_v1';
 function ltSaveEvent(ev){
   try{
-    let arr=ltLoadHistory(); arr.unshift(ev);
+    let arr=ltLoadHistoryLocal(); arr.unshift(ev);
     if(arr.length>50) arr=arr.slice(0,50);
     localStorage.setItem(LT_KEY,JSON.stringify(arr));
   }catch(e){}
+  if(ltUser&&ltDb)
+    ltDb.collection('users').doc(ltUser.uid).collection('events')
+      .doc(String(ev.id)).set(ev).catch(()=>{});
+}
+function ltLoadHistoryLocal(){
+  try{const r=localStorage.getItem(LT_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
 }
 function ltLoadHistory(){
-  try{const r=localStorage.getItem(LT_KEY);return r?JSON.parse(r):[];}catch(e){return[];}
+  return ltCloudEvents!==null ? ltCloudEvents : ltLoadHistoryLocal();
 }
 function ltClearHistory(){
   if(!confirm('Delete all saved events?')) return;
+  if(ltUser&&ltDb){
+    ltDb.collection('users').doc(ltUser.uid).collection('events').get()
+      .then(s=>{const b=ltDb.batch();s.docs.forEach(d=>b.delete(d.ref));return b.commit();})
+      .catch(()=>{});
+  }
   try{localStorage.removeItem(LT_KEY);}catch(e){}
   document.getElementById('lt-history').classList.add('hidden');
 }
@@ -1092,6 +1190,124 @@ function ltEsc(s){
 }
 
 /* ════════════════════════════
+   FIREBASE AUTH + FIRESTORE
+════════════════════════════ */
+let ltDb = null;
+
+function ltFbConfigured(){ return LT_FB_CFG.apiKey && LT_FB_CFG.apiKey!=='YOUR_API_KEY'; }
+
+function ltInitFirebase(){
+  if(!ltFbConfigured()) return;
+  try{
+    firebase.initializeApp(LT_FB_CFG);
+    const auth = firebase.auth();
+    ltDb = firebase.firestore();
+
+    auth.onAuthStateChanged(user=>{
+      ltUser = user;
+      ltUpdateAuthUI(user);
+      if(user){
+        ltStartCloudSync(user.uid);
+      } else {
+        ltStopCloudSync();
+        ltRenderHistory();
+      }
+    });
+  }catch(e){ console.warn('Firebase init error:',e); }
+}
+
+async function ltSignIn(){
+  if(!ltFbConfigured()) return;
+  try{
+    const p = new firebase.auth.GoogleAuthProvider();
+    await firebase.auth().signInWithPopup(p);
+  }catch(e){
+    if(e.code!=='auth/popup-closed-by-user') alert('Sign-in failed: '+e.message);
+  }
+}
+
+async function ltSignOut(){
+  if(!confirm('Sign out of LifeTracker?')) return;
+  try{ await firebase.auth().signOut(); }catch(e){}
+}
+
+function ltUpdateAuthUI(user){
+  const btnSign  = document.getElementById('btn-signin');
+  const authInfo = document.getElementById('auth-info');
+  const authAva  = document.getElementById('auth-ava');
+  const authName = document.getElementById('auth-name');
+  const syncTag  = document.getElementById('sync-tag');
+  if(user){
+    btnSign.classList.add('hidden');
+    authInfo.classList.remove('hidden');
+    authAva.innerHTML = user.photoURL
+      ? `<img src="${ltEsc(user.photoURL)}" alt=""/>`
+      : (user.displayName||user.email||'U')[0].toUpperCase();
+    authAva.title = 'Sign out';
+    authName.textContent = (user.displayName||user.email||'').split(' ')[0];
+    syncTag.textContent='☁️ Cloud'; syncTag.className='sync-tag cloud';
+  } else {
+    btnSign.classList.remove('hidden');
+    authInfo.classList.add('hidden');
+    syncTag.textContent=''; syncTag.className='sync-tag';
+  }
+}
+
+function ltStartCloudSync(uid){
+  ltCloudUnsub = ltDb.collection('users').doc(uid).collection('events')
+    .orderBy('id','desc').limit(100)
+    .onSnapshot(snap=>{
+      ltCloudEvents = snap.docs.map(d=>d.data());
+      if(!ltMigrateShown && ltCloudEvents.length===0){
+        const loc = ltLoadHistoryLocal();
+        if(loc.length>0){ ltShowMigration(loc.length); ltMigrateShown=true; }
+      }
+      ltRenderHistory();
+    }, err=>console.warn('Firestore error:',err));
+}
+
+function ltStopCloudSync(){
+  if(ltCloudUnsub){ ltCloudUnsub(); ltCloudUnsub=null; }
+  ltCloudEvents=null; ltMigrateShown=false;
+}
+
+function ltShowMigration(count){
+  const el=document.getElementById('lt-migrate');
+  if(!el) return;
+  el.innerHTML=`<div class="mig-text">☁️ You have <strong>${count}</strong> locally stored event${count>1?'s':''} — sync to your account?</div>
+    <button class="btn-mig-yes" onclick="ltDoMigrate()">Sync to cloud</button>
+    <button class="btn-mig-no" onclick="ltDismissMigrate()">Keep local</button>`;
+  el.classList.remove('hidden');
+  document.getElementById('lt-history').classList.remove('hidden');
+}
+
+function ltDismissMigrate(){
+  const el=document.getElementById('lt-migrate');
+  if(el) el.classList.add('hidden');
+}
+
+async function ltDoMigrate(){
+  if(!ltUser||!ltDb) return;
+  const local=ltLoadHistoryLocal();
+  if(!local.length){ ltDismissMigrate(); return; }
+  const el=document.getElementById('lt-migrate');
+  if(el) el.innerHTML='<div class="mig-text">⏳ Syncing to cloud…</div>';
+  try{
+    const batch=ltDb.batch();
+    local.forEach(ev=>{
+      const ref=ltDb.collection('users').doc(ltUser.uid).collection('events').doc(String(ev.id));
+      batch.set(ref,ev);
+    });
+    await batch.commit();
+    try{ localStorage.removeItem(LT_KEY); }catch(e){}
+    ltDismissMigrate();
+  }catch(err){
+    if(el) el.innerHTML=`<div class="mig-text" style="color:var(--red)">⚠️ Failed: ${ltEsc(err.message)}</div>
+      <button class="btn-mig-no" onclick="ltDismissMigrate()">Close</button>`;
+  }
+}
+
+/* ════════════════════════════
    BOOT
 ════════════════════════════ */
 (function(){
@@ -1102,6 +1318,10 @@ function ltEsc(s){
     document.getElementById('btn-top-add').classList.remove('hidden');
   }
   ltRenderHistory();
+  if(ltFbConfigured()){
+    document.getElementById('btn-signin').classList.remove('hidden');
+    ltInitFirebase();
+  }
 })();
 
 /* ════════════════════════════
