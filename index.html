@@ -1213,14 +1213,24 @@ function ltInitFirebase(){
         ltRenderHistory();
       }
     });
+    // Complete redirect sign-in (mobile)
+    auth.getRedirectResult().catch(()=>{});
   }catch(e){ console.warn('Firebase init error:',e); }
+}
+
+function ltIsMobile(){
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 }
 
 async function ltSignIn(){
   if(!ltFbConfigured()) return;
   try{
     const p = new firebase.auth.GoogleAuthProvider();
-    await firebase.auth().signInWithPopup(p);
+    if(ltIsMobile()){
+      await firebase.auth().signInWithRedirect(p);
+    } else {
+      await firebase.auth().signInWithPopup(p);
+    }
   }catch(e){
     if(e.code!=='auth/popup-closed-by-user') alert('Sign-in failed: '+e.message);
   }
