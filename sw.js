@@ -1,4 +1,4 @@
-const CACHE = 'lt-v1';
+const CACHE = 'lt-v2';
 const URLS  = ['./', './index.html', './icon.svg'];
 
 self.addEventListener('install', e => {
