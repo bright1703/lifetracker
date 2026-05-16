@@ -1218,17 +1218,19 @@ function ltInitFirebase(){
   }catch(e){ console.warn('Firebase init error:',e); }
 }
 
-function ltIsMobile(){
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+function ltIsAndroid(){
+  return /Android/i.test(navigator.userAgent);
 }
 
 async function ltSignIn(){
   if(!ltFbConfigured()) return;
   try{
     const p = new firebase.auth.GoogleAuthProvider();
-    if(ltIsMobile()){
+    if(ltIsAndroid()){
+      // Android handles redirect well
       await firebase.auth().signInWithRedirect(p);
     } else {
+      // Desktop + iOS: use popup (iOS Safari blocks cross-site cookies in redirect)
       await firebase.auth().signInWithPopup(p);
     }
   }catch(e){
