@@ -6,7 +6,14 @@
 <title>LifeTracker — Record Your Day</title>
 <meta name="description" content="Track daily events with automatic moon phases, weather, solar activity and astrology. Your personal cosmic diary."/>
 <meta name="theme-color" content="#0d0d14"/>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>"/>
+<link rel="icon" href="icon.svg" type="image/svg+xml"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="LifeTracker"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -280,6 +287,73 @@ input[type=date]{color-scheme:dark}
 .hi-copy{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:12px;font-family:var(--font);cursor:pointer;transition:opacity .15s}
 .hi-copy:hover{opacity:.85}
 
+/* ── Privacy Banner ── */
+.privacy-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(13,13,20,.97);
+  border-top:1px solid var(--border);
+  padding:13px 20px;
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  animation:ltUp .3s ease both;
+}
+[data-theme=light] .privacy-banner{background:rgba(240,240,255,.97)}
+.prv-text{flex:1;font-size:12.5px;color:var(--tx2);line-height:1.55;min-width:180px}
+.prv-text strong{color:var(--tx)}
+.btn-prv-ok{
+  padding:8px 22px;background:linear-gradient(135deg,var(--accent),#4f1fb5);
+  color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:600;
+  font-family:var(--font);cursor:pointer;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(124,58,237,.35);
+}
+.btn-prv-ok:hover{opacity:.88}
+
+/* ── Install Button ── */
+.btn-install{
+  padding:7px 13px;background:var(--card);color:var(--tx2);
+  border:1px solid var(--border);border-radius:20px;
+  font-size:13px;font-family:var(--font);cursor:pointer;
+  transition:background .15s,color .15s;display:none;white-space:nowrap;
+}
+.btn-install.visible{display:block}
+.btn-install:hover{background:var(--card2);color:var(--tx)}
+
+/* ── iOS / Install Modal ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.55);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeOv .2s ease;
+}
+@keyframes fadeOv{from{opacity:0}to{opacity:1}}
+.install-modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:22px 22px 0 0;
+  padding:28px 24px 46px;
+  max-width:480px;width:100%;
+  animation:ltUp .3s cubic-bezier(.22,.68,0,1.2) both;
+}
+.im-title{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.im-sub{font-size:13.5px;color:var(--tx2);margin-bottom:22px;line-height:1.55}
+.im-step{display:flex;align-items:flex-start;gap:13px;margin-bottom:16px}
+.im-num{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#4f1fb5);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;margin-top:1px;
+}
+.im-txt{font-size:14px;color:var(--tx);line-height:1.5}
+.im-txt strong{font-weight:600}
+.im-note{font-size:12px;color:var(--tx3);margin-top:18px;text-align:center;line-height:1.5}
+.btn-im-close{
+  width:100%;padding:13px;margin-top:14px;
+  background:var(--bg3);color:var(--tx2);
+  border:1px solid var(--border);border-radius:14px;
+  font-size:15px;font-family:var(--font);cursor:pointer;
+  transition:background .15s;
+}
+.btn-im-close:hover{background:var(--card2);color:var(--tx)}
+
 /* ── Utility ── */
 .hidden{display:none!important}
 
@@ -293,6 +367,13 @@ input[type=date]{color-scheme:dark}
 </head>
 <body>
 
+<div id="lt-privacy" class="privacy-banner" style="display:none">
+  <div class="prv-text">
+    🔒 <strong>Privacy notice:</strong> Your event data is stored locally on your device and never sent to our servers. City name is shared with open geocoding &amp; weather APIs (Komoot, Open-Meteo, NOAA) solely to fetch cosmic data for your entry.
+  </div>
+  <button class="btn-prv-ok" onclick="ltAcceptPrivacy()">Got it</button>
+</div>
+
 <nav class="topbar">
   <span class="logo" onclick="ltGoHome()">
     <span class="logo-icon">🌙</span>
@@ -300,6 +381,7 @@ input[type=date]{color-scheme:dark}
   </span>
   <div class="topbar-right">
     <button class="btn-top-add hidden" id="btn-top-add" onclick="ltOpenForm()">+ Record Event</button>
+    <button class="btn-install" id="btn-install" onclick="ltInstall()">📲 Install</button>
     <button class="btn-theme" id="btn-theme" onclick="ltToggleTheme()">☀️ Light</button>
   </div>
 </nav>
@@ -403,6 +485,50 @@ input[type=date]{color-scheme:dark}
   </div>
 
 </main>
+
+<div id="lt-install-modal" class="modal-overlay hidden" onclick="ltCloseInstallModal(event)">
+  <div class="install-modal">
+    <div class="im-title">📲 Install LifeTracker</div>
+    <div class="im-sub">Add to your Home Screen for the best experience — full screen, works offline, no browser bars.</div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--tx2);margin-bottom:14px">
+      🍎 On iPhone / iPad (Safari)
+    </div>
+    <div class="im-step">
+      <div class="im-num">1</div>
+      <div class="im-txt">Tap the <strong>Share</strong> button <span style="font-size:15px">⬆️</span> at the bottom of Safari</div>
+    </div>
+    <div class="im-step">
+      <div class="im-num">2</div>
+      <div class="im-txt">Scroll and tap <strong>"Add to Home Screen"</strong></div>
+    </div>
+    <div class="im-step">
+      <div class="im-num">3</div>
+      <div class="im-txt">Tap <strong>"Add"</strong> in the top-right corner to confirm</div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:18px 0 16px"></div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--tx2);margin-bottom:14px">
+      🤖 On Android (Chrome)
+    </div>
+    <div class="im-step">
+      <div class="im-num">1</div>
+      <div class="im-txt">Tap the <strong>menu</strong> ⋮ in the top-right corner of Chrome</div>
+    </div>
+    <div class="im-step">
+      <div class="im-num">2</div>
+      <div class="im-txt">Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></div>
+    </div>
+    <div class="im-step">
+      <div class="im-num">3</div>
+      <div class="im-txt">Tap <strong>"Install"</strong> to confirm</div>
+    </div>
+
+    <div class="im-note">⚡ Once installed, the app works offline and launches like a native app.</div>
+    <button class="btn-im-close" onclick="ltCloseInstallModal()">Close</button>
+  </div>
+</div>
 
 <script>
 /* ════════════════════════════
@@ -976,6 +1102,56 @@ function ltEsc(s){
     document.getElementById('btn-top-add').classList.remove('hidden');
   }
   ltRenderHistory();
+})();
+
+/* ════════════════════════════
+   PRIVACY BANNER
+════════════════════════════ */
+function ltAcceptPrivacy(){
+  try{ localStorage.setItem('lt_privacy_ok','1'); }catch(e){}
+  document.getElementById('lt-privacy').style.display='none';
+}
+(function(){
+  try{ if(!localStorage.getItem('lt_privacy_ok')) document.getElementById('lt-privacy').style.display='flex'; }catch(e){}
+})();
+
+/* ════════════════════════════
+   PWA INSTALL
+════════════════════════════ */
+let ltDeferredPrompt=null;
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  ltDeferredPrompt=e;
+  document.getElementById('btn-install').classList.add('visible');
+});
+window.addEventListener('appinstalled',()=>{
+  ltDeferredPrompt=null;
+  document.getElementById('btn-install').classList.remove('visible');
+});
+
+function ltInstall(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS||!ltDeferredPrompt){
+    document.getElementById('lt-install-modal').classList.remove('hidden');
+    return;
+  }
+  ltDeferredPrompt.prompt();
+  ltDeferredPrompt.userChoice.then(()=>{
+    ltDeferredPrompt=null;
+    document.getElementById('btn-install').classList.remove('visible');
+  });
+}
+function ltCloseInstallModal(e){
+  if(!e||e.target===document.getElementById('lt-install-modal'))
+    document.getElementById('lt-install-modal').classList.add('hidden');
+}
+
+/* Show install btn on iOS (no beforeinstallprompt there) */
+(function(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS&&!window.navigator.standalone)
+    document.getElementById('btn-install').classList.add('visible');
 })();
 </script>
 </body>
