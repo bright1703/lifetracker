@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>LifeTracker — Record Your Day</title>
 <meta name="description" content="Track daily events with automatic moon phases, weather, solar activity and astrology. Your personal cosmic diary."/>
 <meta name="theme-color" content="#0d0d14"/>
@@ -419,6 +419,15 @@ input[type=date]{color-scheme:dark}
   .hero-title{font-size:30px}
   .hero-cta{font-size:15px;padding:13px 24px}
 }
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
 </style>
 </head>
 <body>
@@ -467,9 +476,9 @@ input[type=date]{color-scheme:dark}
   </div>
 
   <!-- Form section -->
-  <div id="lt-form-section" class="hidden">
+  <div id="lt-form-section" class="hidden" role="region" aria-labelledby="form-title">
     <div class="form-card">
-      <div class="form-head">✦ Record an Event</div>
+      <div class="form-head" id="form-title">✦ Record an Event</div>
 
       <div class="field">
         <label>What happened?</label>
@@ -479,16 +488,16 @@ input[type=date]{color-scheme:dark}
       <div class="field">
         <label>Mood</label>
         <div class="mood-grid">
-          <button class="mood-btn" data-mood="exceptional" onclick="ltMood('exceptional')">
+          <button class="mood-btn" data-mood="exceptional" onclick="ltMood('exceptional')" aria-label="Mood: Exceptional" title="Exceptional">
             <span class="mood-emoji">🔥</span><span class="mood-lbl">Exceptional</span>
           </button>
-          <button class="mood-btn" data-mood="good" onclick="ltMood('good')">
+          <button class="mood-btn" data-mood="good" onclick="ltMood('good')" aria-label="Mood: Good" title="Good">
             <span class="mood-emoji">😊</span><span class="mood-lbl">Good</span>
           </button>
-          <button class="mood-btn sel-neutral" data-mood="neutral" onclick="ltMood('neutral')">
+          <button class="mood-btn sel-neutral" data-mood="neutral" onclick="ltMood('neutral')" aria-label="Mood: Neutral" title="Neutral">
             <span class="mood-emoji">😐</span><span class="mood-lbl">Neutral</span>
           </button>
-          <button class="mood-btn" data-mood="bad" onclick="ltMood('bad')">
+          <button class="mood-btn" data-mood="bad" onclick="ltMood('bad')" aria-label="Mood: Bad" title="Bad">
             <span class="mood-emoji">😞</span><span class="mood-lbl">Bad</span>
           </button>
         </div>
@@ -508,7 +517,7 @@ input[type=date]{color-scheme:dark}
 
       <div class="field">
         <label>My tags (comma separated)</label>
-        <input type="text" id="lt-tags" placeholder="family, work, travel…" autocomplete="off"/>
+        <input type="text" id="lt-tags" placeholder="family, work, travel…" autocomplete="off" inputmode="text"/>
       </div>
 
       <div class="btn-row">
@@ -757,7 +766,9 @@ async function ltGenerate(){
   const eventDate = new Date((dateStr||new Date().toISOString().slice(0,10))+'T12:00:00');
   const userTags = document.getElementById('lt-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
 
-  document.getElementById('btn-gen').disabled = true;
+  const btnGen = document.getElementById('btn-gen');
+  btnGen.disabled = true;
+  btnGen.textContent = '✨ Saving…';
   document.getElementById('lt-result').classList.add('hidden');
 
   const steps = [
@@ -800,7 +811,8 @@ async function ltGenerate(){
   document.getElementById('lt-export').value = exportText;
   document.getElementById('lt-loading').classList.add('hidden');
   document.getElementById('lt-result').classList.remove('hidden');
-  document.getElementById('btn-gen').disabled = false;
+  btnGen.disabled = false;
+  btnGen.textContent = 'Generate Report';
   document.getElementById('lt-result').scrollIntoView({behavior:'smooth', block:'start'});
 
   ltSaveEvent({
@@ -1127,7 +1139,7 @@ function ltLoadHistory(){
   return ltCloudEvents!==null ? ltCloudEvents : ltLoadHistoryLocal();
 }
 function ltClearHistory(){
-  if(!confirm('Delete all saved events?')) return;
+  if(!confirm('Удалить все события из истории? Это действие нельзя отменить.')) return;
   if(ltUser&&ltDb){
     ltDb.collection('users').doc(ltUser.uid).collection('events').get()
       .then(s=>{const b=ltDb.batch();s.docs.forEach(d=>b.delete(d.ref));return b.commit();})
@@ -1139,7 +1151,11 @@ function ltClearHistory(){
 function ltRenderHistory(){
   const events=ltLoadHistory();
   const sec=document.getElementById('lt-history');
-  if(!events.length){sec.classList.add('hidden');return;}
+  if(!events.length){
+    sec.classList.remove('hidden');
+    document.getElementById('lt-hist-list').innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--tx2)"><div style="font-size:40px;margin-bottom:14px">🌙</div><div style="font-size:16px;font-weight:600;color:var(--tx);margin-bottom:8px">Your first cosmic memory</div><div style="font-size:14px;line-height:1.6;max-width:300px;margin:0 auto">Record how your day went — the app will automatically add moon phase, weather and astrological context.</div></div>';
+    return;
+  }
   const mE={good:'😊',neutral:'😐',bad:'😞',exceptional:'🔥'};
   const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('lt-hist-label').textContent=`Event History (${events.length})`;
@@ -1375,6 +1391,16 @@ function ltCloseInstallModal(e){
   if(isIOS&&!window.navigator.standalone)
     document.getElementById('btn-install').classList.add('visible');
 })();
+</script>
+
+<script>
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  const formSection = document.getElementById('lt-form-section');
+  const installModal = document.getElementById('lt-install-modal');
+  if(formSection && !formSection.classList.contains('hidden')) ltCloseForm();
+  if(installModal && !installModal.classList.contains('hidden')) ltCloseInstallModal();
+});
 </script>
 </body>
 </html>
