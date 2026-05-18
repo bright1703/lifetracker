@@ -3,8 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>LifeTracker — Record Your Day</title>
-<meta name="description" content="Track daily events with automatic moon phases, weather, solar activity and astrology. Your personal cosmic diary."/>
+<title>LifeTracker — Moon Phase, Weather & Cosmic Event Diary</title>
+
+<link rel="canonical" href="https://lifetracker.art/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lifetracker.art/">
+<meta property="og:title" content="LifeTracker — Moon Phase, Weather & Cosmic Event Diary">
+<meta property="og:description" content="Log daily events and instantly see moon phase, weather, solar activity and astrology for that moment. Free, private, works offline.">
+<meta property="og:image" content="https://lifetracker.art/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LifeTracker — Moon Phase, Weather & Cosmic Event Diary">
+<meta name="twitter:description" content="Log daily events and instantly see moon phase, weather, solar activity and astrology for that moment.">
+<meta name="twitter:image" content="https://lifetracker.art/og-image.png">
+<meta name="description" content="Log daily events and instantly see moon phase, weather, solar activity and astrology for that moment. Your personal cosmic diary — free, private, works offline."/>
 <meta name="theme-color" content="#0d0d14"/>
 <link rel="icon" href="icon.svg" type="image/svg+xml"/>
 <link rel="manifest" href="manifest.json"/>
@@ -429,6 +440,31 @@ input[type=date]{color-scheme:dark}
   }
 }
 </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "LifeTracker",
+  "url": "https://lifetracker.art/",
+  "description": "Log daily events and instantly see moon phase, weather, solar activity and astrology for that moment.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": [
+    "Moon phase tracking",
+    "Weather logging",
+    "Solar activity data",
+    "Astrology integration",
+    "Offline support",
+    "Privacy-first — data stored locally"
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -1403,5 +1439,19 @@ document.addEventListener('keydown', function(e){
   if(installModal && !installModal.classList.contains('hidden')) ltCloseInstallModal();
 });
 </script>
+
+<section id="seo-about" aria-label="About LifeTracker" style="max-width:720px;margin:4rem auto 2rem;padding:2rem 1.25rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#a0a0b8;border-top:1px solid rgba(120,120,200,.1)">
+  <h2 style="font-size:1.35rem;font-weight:700;color:#e0e0f0;margin-bottom:.75rem">What is LifeTracker?</h2>
+  <p style="font-size:.95rem;line-height:1.7;margin-bottom:1.25rem">LifeTracker is a free personal event diary that automatically enriches every entry with real-time cosmic data — moon phase and illumination, local weather and atmospheric pressure, solar activity (Kp-index), and astrological positions.</p>
+  <h3 style="font-size:1rem;font-weight:600;color:#c0c0d8;margin-bottom:.6rem">Key features</h3>
+  <ul style="font-size:.9rem;line-height:1.9;padding-left:1.25rem">
+    <li>Moon phase tracker — see the exact lunar phase for any date</li>
+    <li>Weather diary — log temperature, pressure and conditions automatically</li>
+    <li>Solar activity log — Kp-index and geomagnetic data per event</li>
+    <li>Astrology journal — planetary positions at the moment of your entry</li>
+    <li>100% private — all data stays on your device</li>
+    <li>Works offline — installable as a PWA on iOS and Android</li>
+  </ul>
+</section>
 </body>
 </html>
