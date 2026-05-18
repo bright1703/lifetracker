@@ -1151,6 +1151,7 @@ function ltClearHistory(){
 function ltRenderHistory(){
   const events=ltLoadHistory();
   const sec=document.getElementById('lt-history');
+  if(!ltUser){sec.classList.add('hidden');return;}
   if(!events.length){
     sec.classList.remove('hidden');
     document.getElementById('lt-hist-list').innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--tx2)"><div style="font-size:40px;margin-bottom:14px">🌙</div><div style="font-size:16px;font-weight:600;color:var(--tx);margin-bottom:8px">Your first cosmic memory</div><div style="font-size:14px;line-height:1.6;max-width:300px;margin:0 auto">Record how your day went — the app will automatically add moon phase, weather and astrological context.</div></div>';
